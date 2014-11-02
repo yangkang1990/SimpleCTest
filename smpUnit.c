@@ -1,72 +1,243 @@
-#include <stdlib.h>  
-#include "smpUnit.h"  
- 
-  
-#define UNUSED(param) ((param) = (param))  
-  
-int SMPtest_main (int argc, char *argv[])  
-{   
-    char *str1 = "Hello";  
-    char *str2 = "World";  
-    char *str3 = "WORLD";  
-    void *p1   = NULL;  
-    void *p2   = NULL;  
-  
-    UNUSED(argc);  
-    UNUSED(argv);  
-      
-    SMPTEST_EQUALS(87, 87);  
-  
-    SMPTEST_NOTEQUALS(10, 13);  
-  
-    SMPTEST_LESS_THAN(41, 70);  
-  
-    SMPTEST_LESS_THAN_EQUALS(8, 8);  
-    SMPTEST_LESS_THAN_EQUALS(7, 8);  
-  
-    SMPTEST_GREATER_THAN(70, 41);  
-  
-    SMPTEST_GREATER_THAN_EQUALS(8, 8);  
-    SMPTEST_GREATER_THAN_EQUALS(8, 7);  
+#include <assert.h>
+#include <setjmp.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
 
-    SMPTEST_STR_EQUALS(str2, str3);  
-  
-    SMPTEST_STR_NOTEQUALS(str1, str2);  
-      
-    p1 = malloc(10);  
-    memset(p1, 2, 10);  
-  
-    p2 = malloc(10);  
-    memset(p2, 2, 10);  
-  
-    SMPTEST_MEM_EQUALS(p1, p2, 10);  
-  
-    memset(p2, 5, 10);  
-    SMPTEST_MEM_NOTEQUALS(p1, p2, 10);  
-
-    free(p1);  
-    p1 = NULL;  
-  
-    free(p2);  
-    p2 = NULL;  
-  
-    return 0;  
-}  
+#include "smpUnit.h"
+#include "smpUtil.h"
 
 
+/*-------------------------------------------------------------------------*
+ * SMPTest
+ *-------------------------------------------------------------------------*/
+
+void SMPTestInit(SMPTest* t, const char* name, TestFunction function)
+{
+	t->name =SMPStrCopy(name);
+	t->failed = 0;
+	t->ran = 0;
+	t->message = NULL;
+	t->function = function;
+	t->jumpBuf = NULL;
+}
+
+SMPTest* SMPTestNew(const char* name, TestFunction function)
+{
+	SMPTest* tc = SMP_ALLOC(SMPTest);
+	SMPTestInit(tc, name, function);
+	return tc;
+}
+
+void SMPTestDelete(SMPTest *t)
+{
+        if (!t) return;
+        free(t->name);
+        free(t);
+}
+
+void SMPTestRun(SMPTest* tc)
+{
+	jmp_buf buf;
+	tc->jumpBuf = &buf;
+	if (setjmp(buf) == 0)
+	{
+		tc->ran = 1;
+		(tc->function)(tc);
+	}
+	tc->jumpBuf = 0;
+}
+
+static void SMPFailInternal(SMPTest* tc, const char* file, int line, SMPString* string)
+{
+	char buf[HUGE_STRING_LEN];
+
+	sprintf(buf, "%s:%d: ", file, line);
+	SMPStringInsert(string, buf, 0);
+
+	tc->failed = 1;
+	tc->message = string->buffer;
+	if (tc->jumpBuf != 0) longjmp(*(tc->jumpBuf), 0);
+}
+
+void SMPFail_Line(SMPTest* tc, const char* file, int line, const char* message2, const char* message)
+{
+	SMPString string;
+
+	SMPStringInit(&string);
+	if (message2 != NULL) 
+	{
+		SMPStringAppend(&string, message2);
+		SMPStringAppend(&string, ": ");
+	}
+	SMPStringAppend(&string, message);
+	SMPFailInternal(tc, file, line, &string);
+}
+
+void SMPAssert_Line(SMPTest* tc, const char* file, int line, const char* message, int condition)
+{
+	if (condition) return;
+	SMPFail_Line(tc, file, line, NULL, message);
+}
+
+void SMPAssertStrEquals_LineMsg(SMPTest* tc, const char* file, int line, const char* message, 
+	const char* expected, const char* actual)
+{
+	SMPString string;
+	if ((expected == NULL && actual == NULL) ||
+	    (expected != NULL && actual != NULL &&
+	     strcmp(expected, actual) == 0))
+	{
+		return;
+	}
+
+	SMPStringInit(&string);
+	if (message != NULL) 
+	{
+		SMPStringAppend(&string, message);
+		SMPStringAppend(&string, ": ");
+	}
+	SMPStringAppend(&string, "expected <");
+	SMPStringAppend(&string, expected);
+	SMPStringAppend(&string, "> but was <");
+	SMPStringAppend(&string, actual);
+	SMPStringAppend(&string, ">");
+	SMPFailInternal(tc, file, line, &string);
+}
+
+void SMPAssertIntEquals_LineMsg(SMPTest* tc, const char* file, int line, const char* message, 
+	int expected, int actual)
+{
+	char buf[STRING_MAX];
+	if (expected == actual) return;
+	sprintf(buf, "expected <%d> but was <%d>", expected, actual);
+	SMPFail_Line(tc, file, line, message, buf);
+}
+
+void SMPAssertDblEquals_LineMsg(SMPTest* tc, const char* file, int line, const char* message, 
+	double expected, double actual, double delta)
+{
+	char buf[STRING_MAX];
+	if (fabs(expected - actual) <= delta) return;
+	sprintf(buf, "expected <%f> but was <%f>", expected, actual); 
+
+	SMPFail_Line(tc, file, line, message, buf);
+}
+
+void SMPAssertPtrEquals_LineMsg(SMPTest* tc, const char* file, int line, const char* message, 
+	void* expected, void* actual)
+{
+	char buf[STRING_MAX];
+	if (expected == actual) return;
+	sprintf(buf, "expected pointer <0x%p> but was <0x%p>", expected, actual);
+	SMPFail_Line(tc, file, line, message, buf);
+}
 
 
+/*-------------------------------------------------------------------------*
+ * SMPSuite
+ *-------------------------------------------------------------------------*/
 
+void SMPSuiteInit(SMPSuite* testSuite)
+{
+	testSuite->count = 0;
+	testSuite->failCount = 0;
+        memset(testSuite->list, 0, sizeof(testSuite->list));
+}
 
+SMPSuite* SMPSuiteNew(void)
+{
+	SMPSuite* testSuite = SMP_ALLOC(SMPSuite);
+	SMPSuiteInit(testSuite);
+	return testSuite;
+}
 
+void SMPSuiteDelete(SMPSuite *testSuite)
+{
+        unsigned int n;
+        for (n=0; n < MAX_TEST_CASES; n++)
+        {
+                if (testSuite->list[n])
+                {
+                        SMPTestDelete(testSuite->list[n]);
+                }
+        }
+        free(testSuite);
 
+}
 
+void SMPSuiteAdd(SMPSuite* testSuite, SMPTest *testCase)
+{
+	assert(testSuite->count < MAX_TEST_CASES);
+	testSuite->list[testSuite->count] = testCase;
+	testSuite->count++;
+}
 
+void SMPSuiteAddSuite(SMPSuite* testSuite, SMPSuite* testSuite2)
+{
+	int i;
+	for (i = 0 ; i < testSuite2->count ; ++i)
+	{
+		SMPTest* testCase = testSuite2->list[i];
+		SMPSuiteAdd(testSuite, testCase);
+	}
+}
 
+void SMPSuiteRun(SMPSuite* testSuite)
+{
+	int i;
+	for (i = 0 ; i < testSuite->count ; ++i)
+	{
+		SMPTest* testCase = testSuite->list[i];
+		SMPTestRun(testCase);
+		if (testCase->failed) { testSuite->failCount += 1; }
+	}
+}
 
+void SMPSuiteSummary(SMPSuite* testSuite, SMPString* summary)
+{
+	int i;
+	for (i = 0 ; i < testSuite->count ; ++i)
+	{
+		SMPTest* testCase = testSuite->list[i];
+		SMPStringAppend(summary, testCase->failed ? "F" : ".");
+	}
+	SMPStringAppend(summary, "\n\n");
+}
 
+void SMPSuiteDetails(SMPSuite* testSuite, SMPString* details)
+{
+	int i;
+	int failCount = 0;
 
+	if (testSuite->failCount == 0)
+	{
+		int passCount = testSuite->count - testSuite->failCount;
+		const char* testWord = passCount == 1 ? "test" : "tests";
+		SMPStringAppendFormat(details, "OK (%d %s)\n", passCount, testWord);
+	}
+	else
+	{
+		if (testSuite->failCount == 1)
+			SMPStringAppend(details, "There was 1 failure:\n");
+		else
+			SMPStringAppendFormat(details, "There were %d failures:\n", testSuite->failCount);
 
+		for (i = 0 ; i < testSuite->count ; ++i)
+		{
+			SMPTest* testCase = testSuite->list[i];
+			if (testCase->failed)
+			{
+				failCount++;
+				SMPStringAppendFormat(details, "%d) %s: %s\n",
+					failCount, testCase->name, testCase->message);
+			}
+		}
+		SMPStringAppend(details, "\n!!!FAILURES!!!\n");
 
-
-
+		SMPStringAppendFormat(details, "Runs: %d ",   testSuite->count);
+		SMPStringAppendFormat(details, "Passes: %d ", testSuite->count - testSuite->failCount);
+		SMPStringAppendFormat(details, "Fails: %d\n",  testSuite->failCount);
+	}
+}

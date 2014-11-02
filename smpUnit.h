@@ -1,237 +1,92 @@
-#ifndef __SMPSMPT_H  
-#define __SMPSMPT_H  
-  
-#include <stdio.h>  
-#include <string.h>  
+#ifndef _SMPUNIT_H_
+#define _SMPUNIT_H_
 
-  
-static int gTotalCase     = 0;  
-static int gSuccessedCase = 0;  
-static int gFailedCase    = 0;  
-  
-#ifndef NULL  
-#define NULL ((void*)0)  
-#endif  
-  
-#define INTERNAL_SUCCEEDED(_a, _b, _oper) \
-    printf("    Expected: \""#_a"\" "#_oper" \""#_b"\"\n      Result: Succeeded\n")  
-#define INTERNAL_FAILED(_a, _b, _oper) \
-    printf("    Expected: \""#_a"\" "#_oper" \""#_b"\"\n (X)  Result: Failed\n")      
-#define INTERNAL_SHOWINFO() \
-    printf("Case %d =====>\n", gTotalCase); \
-    printf("    Location: %s:%d\n", __FILE__, __LINE__); \
-  
-#define SMPTEST_ERROR(_string) do { \
-    printf("Error:  %s\n",_string); \
-    return -1;\
-} while (0)  
-  
-#define SMPTEST_EQUALS(_a, _b) do { \
-    gTotalCase++; \
-    INTERNAL_SHOWINFO(); \
-    if ((_a) == (_b)) { \
-        INTERNAL_SUCCEEDED(_a, _b, ==); \
-        gSuccessedCase++; \
-    } \
-    else { \
-        INTERNAL_FAILED(_a, _b, ==); \
-        gFailedCase++; \
-    } \
-    printf("\n"); \
-} while (0)  
-  
-#define SMPTEST_NOTEQUALS(_a, _b) do { \
-    gTotalCase++; \
-    INTERNAL_SHOWINFO(); \
-    if ((_a) == (_b)) { \
-        INTERNAL_FAILED(_a, _b, !=); \
-        gFailedCase++; \
-    } \
-    else { \
-        INTERNAL_SUCCEEDED(_a, _b, !=); \
-        gSuccessedCase++; \
-    } \
-    printf("\n"); \
-} while (0)  
-  
-#define SMPTEST_LESS_THAN(_a, _b) do { \
-    gTotalCase++; \
-    INTERNAL_SHOWINFO(); \
-    if ((_a) < (_b)) { \
-        INTERNAL_SUCCEEDED(_a, _b, <); \
-        gSuccessedCase ++; \
-    } \
-    else { \
-        INTERNAL_FAILED(_a, _b, <); \
-        gFailedCase++; \
-    } \
-    printf("\n"); \
-} while (0)  
-  
-#define SMPTEST_LESS_THAN_EQUALS(_a, _b) do { \
-    gTotalCase++; \
-    INTERNAL_SHOWINFO(); \
-    if ((_a) <= (_b)) { \
-        INTERNAL_SUCCEEDED(_a, _b, <=); \
-        gSuccessedCase++; \
-    } \
-    else { \
-        INTERNAL_FAILED(_a, _b, <=); \
-        gFailedCase++; \
-    } \
-    printf("\n"); \
-} while (0)  
-  
-#define SMPTEST_GREATER_THAN(_a, _b) do { \
-    gTotalCase++; \
-    INTERNAL_SHOWINFO(); \
-    if ((_a) > (_b)) { \
-        INTERNAL_SUCCEEDED(_a, _b, >); \
-        gSuccessedCase++; \
-    } \
-    else { \
-        INTERNAL_FAILED(_a, _b, >); \
-        gFailedCase++; \
-    } \
-    printf("\n"); \
-} while (0)  
-  
-#define SMPTEST_GREATER_THAN_EQUALS(_a, _b) do { \
-    gTotalCase++; \
-    INTERNAL_SHOWINFO(); \
-    if ((_a) >= (_b)) { \
-        INTERNAL_SUCCEEDED(_a, _b, >=); \
-        gSuccessedCase++; \
-    } \
-    else { \
-        INTERNAL_FAILED(_a, _b, >=); \
-        gFailedCase++; \
-    } \
-    printf("\n"); \
-} while (0)  
-  
-#define SMPTEST_STR_EQUALS(_a, _b) do { \
-    gTotalCase++; \
-    INTERNAL_SHOWINFO(); \
-    if ( NULL == (_a) || NULL == (_b) ) { \
-        SMPTEST_ERROR("ptr should not be NULL"); \
-    } \
-    if ( !strcmp((_a), (_b)) ) { \
-        INTERNAL_SUCCEEDED(_a, _b, ==); \
-        gSuccessedCase++; \
-    } \
-    else { \
-        INTERNAL_FAILED(_a, _b, ==); \
-        gFailedCase++; \
-    } \
-    printf("\n"); \
-} while (0)  
-  
-#define SMPTEST_STR_NOTEQUALS(_a, _b) do { \
-    gTotalCase++; \
-    INTERNAL_SHOWINFO(); \
-    if ( NULL == (_a) || NULL == (_b) ) { \
-        SMPTEST_ERROR("ptr should not be NULL"); \
-    } \
-    if ( !strcmp((_a), (_b)) ) { \
-        INTERNAL_FAILED(_a, _b, !=); \
-        gFailedCase++; \
-    } \
-    else { \
-        INTERNAL_SUCCEEDED(_a, _b, !=); \
-        gSuccessedCase++; \
-    } \
-    printf("\n"); \
-} while (0)  
-  
-#define SMPTEST_MEM_EQUALS(_a, _b, _len) do { \
-    gTotalCase++; \
-    INTERNAL_SHOWINFO(); \
-    if ( NULL == (_a) || NULL == (_b) ) { \
-        SMPTEST_ERROR("ptr should not be NULL"); \
-    } \
-    if ( (_len) <= 0 ) { \
-        SMPTEST_ERROR("mem len should be positive"); \
-    } \
-    if ( !memcmp((void*)(_a),(void*)(_b), (int)(_len)) ) { \
-        INTERNAL_SUCCEEDED(_a, _b, ==); \
-        gSuccessedCase++; \
-    } \
-    else { \
-        INTERNAL_FAILED(_a, _b, ==); \
-        gFailedCase++; \
-    } \
-    printf("\n"); \
-} while (0)  
-  
-#define SMPTEST_MEM_NOTEQUALS(_a, _b, _len) do { \
-    gTotalCase++; \
-    INTERNAL_SHOWINFO(); \
-    if ( NULL == (_a) || NULL == (_b) ) { \
-        SMPTEST_ERROR("ptr should not be NULL"); \
-    } \
-    if ( (_len) <= 0 ) { \
-        SMPTEST_ERROR("mem len should be positive"); \
-    } \
-    if ( !memcmp((void*)(_a), (void*)(_b), (int)(_len)) ) { \
-        INTERNAL_FAILED(_a, _b, !=); \
-        gFailedCase++; \
-    } \
-    else { \
-        INTERNAL_SUCCEEDED(_a, _b, !=); \
-        gSuccessedCase++; \
-    } \
-    printf("\n"); \
-} while (0)  
-  
-static void SMPtest_bar()  
-{  
-    printf("********************************************************\n");   
-    printf("*                      Simple Test                       *\n");  
-    printf("********************************************************\n");  
-    printf("\n");  
-}  
-  
-static int SMPtest_report()  
-{  
-    printf("\n");  
-    printf("********************************************************\n");   
-    printf("*                     Test Report                      *\n");  
-    printf("********************************************************\n");  
-      
-    if (0 == gTotalCase) {  
-        printf("No test case is run\n");  
-        goto pass;  
-    }  
-    printf("    Total: %d\n", gTotalCase);  
-    printf("Succeeded: %d (%d%%)\n", gSuccessedCase, gSuccessedCase * 100 / gTotalCase);  
-    printf("********************************************************\n");   
-    printf("\n");  
-  
-    if (gTotalCase != gSuccessedCase) {  
-        printf("\n");  
-        printf(":-( Failed\n");  
-        printf("\n");  
-        return -1;  
-    }  
-  
-pass:      
-    printf("\n");  
-    printf(":-) Passed\n");  
-    printf("\n");  
-  
-    return 0;  
-}  
-  
+#include <setjmp.h>
+#include <stdarg.h>
+#include "smpUtil.h"
 
-extern int SMPtest_main(int _argc, char *_argv[]);  
-  
-int main(int _argc, char *_argv[])  
-{  
-    SMPtest_bar();  
-    SMPtest_main(_argc, _argv);  
-    return SMPtest_report();  
-}  
+#define SMPEST_VERSION  "SMPTest 1.5"
 
-  
-#endif  /* end of __SMPTEST_H */  
+/* SMPUnit Test struc and function */
+
+typedef struct SMPTest SMPTest;
+
+typedef void (*TestFunction)(SMPTest *);
+
+struct SMPTest
+{
+	char* name;
+	TestFunction function;
+	int failed;
+	int ran;
+	const char* message;
+	jmp_buf *jumpBuf;
+};
+
+void SMPTestInit(SMPTest* t, const char* name, TestFunction function);
+SMPTest* SMPTestNew(const char* name, TestFunction function);
+void SMPTestRun(SMPTest* tc);
+void SMPTestDelete(SMPTest *t);
+
+/* Internal versions of assert functions -- use the public versions */
+void SMPFail_Line(SMPTest* tc, const char* file, int line, const char* message2, const char* message);
+void SMPAssert_Line(SMPTest* tc, const char* file, int line, const char* message, int condition);
+void SMPAssertStrEquals_LineMsg(SMPTest* tc, 
+	const char* file, int line, const char* message, 
+	const char* expected, const char* actual);
+void SMPAssertIntEquals_LineMsg(SMPTest* tc, 
+	const char* file, int line, const char* message, 
+	int expected, int actual);
+void SMPAssertDblEquals_LineMsg(SMPTest* tc, 
+	const char* file, int line, const char* message, 
+	double expected, double actual, double delta);
+void SMPAssertPtrEquals_LineMsg(SMPTest* tc, 
+	const char* file, int line, const char* message, 
+	void* expected, void* actual);
+
+
+
+
+/* common assert functions , you can add if you want*/
+
+#define SMPFail(tc, ms)                        SMPFail_Line(  (tc), __FILE__, __LINE__, NULL, (ms))
+#define SMPAssert(tc, ms, cond)                SMPAssert_Line((tc), __FILE__, __LINE__, (ms), (cond))
+#define SMPAssertTrue(tc, cond)                SMPAssert_Line((tc), __FILE__, __LINE__, "assert failed", (cond))
+
+#define SMPAssertStrEquals(tc,ex,ac)           SMPAssertStrEquals_LineMsg((tc),__FILE__,__LINE__,NULL,(ex),(ac))
+#define SMPAssertStrEquals_Msg(tc,ms,ex,ac)    SMPAssertStrEquals_LineMsg((tc),__FILE__,__LINE__,(ms),(ex),(ac))
+#define SMPAssertIntEquals(tc,ex,ac)           SMPAssertIntEquals_LineMsg((tc),__FILE__,__LINE__,NULL,(ex),(ac))
+#define SMPAssertIntEquals_Msg(tc,ms,ex,ac)    SMPAssertIntEquals_LineMsg((tc),__FILE__,__LINE__,(ms),(ex),(ac))
+#define SMPAssertDblEquals(tc,ex,ac,dl)        SMPAssertDblEquals_LineMsg((tc),__FILE__,__LINE__,NULL,(ex),(ac),(dl))
+#define SMPAssertDblEquals_Msg(tc,ms,ex,ac,dl) SMPAssertDblEquals_LineMsg((tc),__FILE__,__LINE__,(ms),(ex),(ac),(dl))
+#define SMPAssertPtrEquals(tc,ex,ac)           SMPAssertPtrEquals_LineMsg((tc),__FILE__,__LINE__,NULL,(ex),(ac))
+#define SMPAssertPtrEquals_Msg(tc,ms,ex,ac)    SMPAssertPtrEquals_LineMsg((tc),__FILE__,__LINE__,(ms),(ex),(ac))
+
+#define SMPAssertPtrNotNull(tc,p)        SMPAssert_Line((tc),__FILE__,__LINE__,"null pointer unexpected",(p != NULL))
+#define SMPAssertPtrNotNullMsg(tc,msg,p) SMPAssert_Line((tc),__FILE__,__LINE__,(msg),(p != NULL))
+
+/* SMPSuite */
+
+#define MAX_TEST_CASES	1024
+
+#define SUITE_ADD_TEST(SUITE,TEST)	SMPSuiteAdd(SUITE, SMPTestNew(#TEST, TEST))
+
+typedef struct
+{
+	int count;
+	SMPTest* list[MAX_TEST_CASES];
+	int failCount;
+
+} SMPSuite;
+
+
+void SMPSuiteInit(SMPSuite* testSuite);
+SMPSuite* SMPSuiteNew(void);
+void SMPSuiteDelete(SMPSuite *testSuite);
+void SMPSuiteAdd(SMPSuite* testSuite, SMPTest *testCase);
+void SMPSuiteAddSuite(SMPSuite* testSuite, SMPSuite* testSuite2);
+void SMPSuiteRun(SMPSuite* testSuite);
+void SMPSuiteSummary(SMPSuite* testSuite, SMPString* summary);
+void SMPSuiteDetails(SMPSuite* testSuite, SMPString* details);
+
+#endif /* CU_TEST_H */
