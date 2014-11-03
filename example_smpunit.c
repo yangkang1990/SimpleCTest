@@ -147,12 +147,12 @@ void TestFails(SMPTest* tc)
 void TestSMPTestNew(SMPTest* tc)
 {
 	SMPTest* tc2 = SMPTestNew("MyTest", TestPasses);
-	SMPAssertStrEquals(tc, "MyTest", tc2->name);
-	SMPAssertTrue(tc, !tc2->failed);
-	SMPAssertTrue(tc, tc2->message == NULL);
-	SMPAssertTrue(tc, tc2->function == TestPasses);
-	SMPAssertTrue(tc, tc2->ran == 0);
-	SMPAssertTrue(tc, tc2->jumpBuf == NULL);
+	SMPAssertStrEquals(tc, "MyTest", tc2->m_szname);
+	SMPAssertTrue(tc, !tc2->m_bfailed);
+	SMPAssertTrue(tc, tc2->m_szmessage == NULL);
+	SMPAssertTrue(tc, tc2->m_pfunction == TestPasses);
+	SMPAssertTrue(tc, tc2->m_bran == 0);
+	SMPAssertTrue(tc, tc2->m_pjumpBuf == NULL);
 }
 
 
@@ -160,12 +160,12 @@ void TestSMPTestInit(SMPTest *tc)
 {
 	SMPTest tc2;
 	SMPTestInit(&tc2, "MyTest", TestPasses);
-	SMPAssertStrEquals(tc, "MyTest", tc2.name);
-	SMPAssertTrue(tc, !tc2.failed);
-	SMPAssertTrue(tc, tc2.message == NULL);
-	SMPAssertTrue(tc, tc2.function == TestPasses);
-	SMPAssertTrue(tc, tc2.ran == 0);
-	SMPAssertTrue(tc, tc2.jumpBuf == NULL);
+	SMPAssertStrEquals(tc, "MyTest", tc2.m_szname);
+	SMPAssertTrue(tc, !tc2.m_bfailed);
+	SMPAssertTrue(tc, tc2.m_szmessage == NULL);
+	SMPAssertTrue(tc, tc2.m_pfunction == TestPasses);
+	SMPAssertTrue(tc, tc2.m_bran == 0);
+	SMPAssertTrue(tc, tc2.m_pjumpBuf == NULL);
 }
 
 void TestSMPAssert(SMPTest* tc)
@@ -174,20 +174,20 @@ void TestSMPAssert(SMPTest* tc)
 	SMPTestInit(&tc2, "MyTest", TestPasses);
 
 	SMPAssert(&tc2, "test 1", 5 == 4 + 1);
-	SMPAssertTrue(tc, !tc2.failed);
-	SMPAssertTrue(tc, tc2.message == NULL);
+	SMPAssertTrue(tc, !tc2.m_bfailed);
+	SMPAssertTrue(tc, tc2.m_szmessage == NULL);
 
 	SMPAssert(&tc2, "test 2", 0);
-	SMPAssertTrue(tc, tc2.failed);
-	SMPCompareAsserts(tc, "SMPAssert didn't fail", "test 2", tc2.message);
+	SMPAssertTrue(tc, tc2.m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssert didn't fail", "test 2", tc2.m_szmessage);
 
 	SMPAssert(&tc2, "test 3", 1);
-	SMPAssertTrue(tc, tc2.failed);
-	SMPCompareAsserts(tc, "SMPAssert didn't fail", "test 2", tc2.message);
+	SMPAssertTrue(tc, tc2.m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssert didn't fail", "test 2", tc2.m_szmessage);
 
 	SMPAssert(&tc2, "test 4", 0);
-	SMPAssertTrue(tc, tc2.failed);
-	SMPCompareAsserts(tc, "SMPAssert didn't fail", "test 4", tc2.message);
+	SMPAssertTrue(tc, tc2.m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssert didn't fail", "test 4", tc2.m_szmessage);
 
 }
 
@@ -200,8 +200,8 @@ void TestSMPAssertPtrEquals_Success(SMPTest* tc)
 
 	/* test success case */
 	SMPAssertPtrEquals(&tc2, &x, &x);
-	SMPAssertTrue(tc, ! tc2.failed);
-	SMPAssertTrue(tc, NULL == tc2.message);
+	SMPAssertTrue(tc, ! tc2.m_bfailed);
+	SMPAssertTrue(tc, NULL == tc2.m_szmessage);
 }
 
 void TestSMPAssertPtrEquals_Failure(SMPTest* tc)
@@ -216,8 +216,8 @@ void TestSMPAssertPtrEquals_Failure(SMPTest* tc)
 	/* test failing case */
 	sprintf(expected_message, "expected pointer <0x%p> but was <0x%p>", nullPtr, &x);
 	SMPAssertPtrEquals(&tc2, NULL, &x);
-	SMPAssertTrue(tc, tc2.failed);
-	SMPCompareAsserts(tc, "SMPAssertPtrEquals failed", expected_message, tc2.message);
+	SMPAssertTrue(tc, tc2.m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssertPtrEquals failed", expected_message, tc2.m_szmessage);
 }
 
 void TestSMPAssertPtrNotNull_Success(SMPTest* tc)
@@ -229,8 +229,8 @@ void TestSMPAssertPtrNotNull_Success(SMPTest* tc)
 
 	/* test success case */
 	SMPAssertPtrNotNull(&tc2, &x);
-	SMPAssertTrue(tc, ! tc2.failed);
-	SMPAssertTrue(tc, NULL == tc2.message);
+	SMPAssertTrue(tc, ! tc2.m_bfailed);
+	SMPAssertTrue(tc, NULL == tc2.m_szmessage);
 }
 
 void TestSMPAssertPtrNotNull_Failure(SMPTest* tc)
@@ -241,8 +241,8 @@ void TestSMPAssertPtrNotNull_Failure(SMPTest* tc)
 
 	/* test failing case */
 	SMPAssertPtrNotNull(&tc2, NULL);
-	SMPAssertTrue(tc, tc2.failed);
-	SMPCompareAsserts(tc, "SMPAssertPtrNotNull failed", "null pointer unexpected", tc2.message);
+	SMPAssertTrue(tc, tc2.m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssertPtrNotNull failed", "null pointer unexpected", tc2.m_szmessage);
 }
 
 void TestSMPTestRun(SMPTest* tc)
@@ -251,10 +251,10 @@ void TestSMPTestRun(SMPTest* tc)
 	SMPTestInit(&tc2, "MyTest", TestFails);
 	SMPTestRun(&tc2);
 
-	SMPAssertStrEquals(tc, "MyTest", tc2.name);
-	SMPAssertTrue(tc, tc2.failed);
-	SMPAssertTrue(tc, tc2.ran);
-	SMPCompareAsserts(tc, "TestRun failed", "test should fail", tc2.message);
+	SMPAssertStrEquals(tc, "MyTest", tc2.m_szname);
+	SMPAssertTrue(tc, tc2.m_bfailed);
+	SMPAssertTrue(tc, tc2.m_bran);
+	SMPCompareAsserts(tc, "TestRun failed", "test should fail", tc2.m_szmessage);
 }
 
 /*-------------------------------------------------------------------------*
@@ -265,15 +265,15 @@ void TestSMPSuiteInit(SMPTest* tc)
 {
 	SMPSuite ts;
 	SMPSuiteInit(&ts);
-	SMPAssertTrue(tc, ts.count == 0);
-	SMPAssertTrue(tc, ts.failCount == 0);
+	SMPAssertTrue(tc, ts.m_ncount == 0);
+	SMPAssertTrue(tc, ts.m_nfailCount == 0);
 }
 
 void TestSMPSuiteNew(SMPTest* tc)
 {
 	SMPSuite* ts = SMPSuiteNew();
-	SMPAssertTrue(tc, ts->count == 0);
-	SMPAssertTrue(tc, ts->failCount == 0);
+	SMPAssertTrue(tc, ts->m_ncount == 0);
+	SMPAssertTrue(tc, ts->m_nfailCount == 0);
 }
 
 void TestSMPSuiteAddTest(SMPTest* tc)
@@ -285,9 +285,9 @@ void TestSMPSuiteAddTest(SMPTest* tc)
 	SMPTestInit(&tc2, "MyTest", TestFails);
 
 	SMPSuiteAdd(&ts, &tc2);
-	SMPAssertTrue(tc, ts.count == 1);
+	SMPAssertTrue(tc, ts.m_ncount == 1);
 
-	SMPAssertStrEquals(tc, "MyTest", ts.list[0]->name);
+	SMPAssertStrEquals(tc, "MyTest", ts.m_alist[0]->m_szname);
 }
 
 void TestSMPSuiteAddSuite(SMPTest* tc)
@@ -302,12 +302,12 @@ void TestSMPSuiteAddSuite(SMPTest* tc)
 	SMPSuiteAdd(ts2, SMPTestNew("TestFails4", TestFails));
 
 	SMPSuiteAddSuite(ts1, ts2);
-	SMPAssertIntEquals(tc, 4, ts1->count);
+	SMPAssertIntEquals(tc, 4, ts1->m_ncount);
 
-	SMPAssertStrEquals(tc, "TestFails1", ts1->list[0]->name);
-	SMPAssertStrEquals(tc, "TestFails2", ts1->list[1]->name);
-	SMPAssertStrEquals(tc, "TestFails3", ts1->list[2]->name);
-	SMPAssertStrEquals(tc, "TestFails4", ts1->list[3]->name);
+	SMPAssertStrEquals(tc, "TestFails1", ts1->m_alist[0]->m_szname);
+	SMPAssertStrEquals(tc, "TestFails2", ts1->m_alist[1]->m_szname);
+	SMPAssertStrEquals(tc, "TestFails3", ts1->m_alist[2]->m_szname);
+	SMPAssertStrEquals(tc, "TestFails4", ts1->m_alist[3]->m_szname);
 }
 
 void TestSMPSuiteRun(SMPTest* tc)
@@ -325,11 +325,11 @@ void TestSMPSuiteRun(SMPTest* tc)
 	SMPSuiteAdd(&ts, &tc2);
 	SMPSuiteAdd(&ts, &tc3);
 	SMPSuiteAdd(&ts, &tc4);
-	SMPAssertTrue(tc, ts.count == 4);
+	SMPAssertTrue(tc, ts.m_ncount == 4);
 
 	SMPSuiteRun(&ts);
-	SMPAssertTrue(tc, ts.count - ts.failCount == 2);
-	SMPAssertTrue(tc, ts.failCount == 2);
+	SMPAssertTrue(tc, ts.m_ncount - ts.m_nfailCount == 2);
+	SMPAssertTrue(tc, ts.m_nfailCount == 2);
 }
 
 void TestSMPSuiteSummary(SMPTest* tc)
@@ -349,8 +349,8 @@ void TestSMPSuiteSummary(SMPTest* tc)
 
 	SMPSuiteSummary(&ts, &summary);
 
-	SMPAssertTrue(tc, ts.count == 2);
-	SMPAssertTrue(tc, ts.failCount == 1);
+	SMPAssertTrue(tc, ts.m_ncount == 2);
+	SMPAssertTrue(tc, ts.m_nfailCount == 1);
 	SMPAssertStrEquals(tc, ".F\n\n", summary.buffer);
 }
 
@@ -374,8 +374,8 @@ void TestSMPSuiteDetails_SingleFail(SMPTest* tc)
 
 	SMPSuiteDetails(&ts, &details);
 
-	SMPAssertTrue(tc, ts.count == 2);
-	SMPAssertTrue(tc, ts.failCount == 1);
+	SMPAssertTrue(tc, ts.m_ncount == 2);
+	SMPAssertTrue(tc, ts.m_nfailCount == 1);
 
 	front = "There was 1 failure:\n"
 		"1) TestFails: ";
@@ -405,8 +405,8 @@ void TestSMPSuiteDetails_SinglePass(SMPTest* tc)
 
 	SMPSuiteDetails(&ts, &details);
 
-	SMPAssertTrue(tc, ts.count == 1);
-	SMPAssertTrue(tc, ts.failCount == 0);
+	SMPAssertTrue(tc, ts.m_ncount == 1);
+	SMPAssertTrue(tc, ts.m_nfailCount == 0);
 
 	expected =
 		"OK (1 test)\n";
@@ -432,8 +432,8 @@ void TestSMPSuiteDetails_MultiplePasses(SMPTest* tc)
 
 	SMPSuiteDetails(&ts, &details);
 
-	SMPAssertTrue(tc, ts.count == 2);
-	SMPAssertTrue(tc, ts.failCount == 0);
+	SMPAssertTrue(tc, ts.m_ncount == 2);
+	SMPAssertTrue(tc, ts.m_nfailCount == 0);
 
 	expected =
 		"OK (2 tests)\n";
@@ -461,8 +461,8 @@ void TestSMPSuiteDetails_MultipleFails(SMPTest* tc)
 
 	SMPSuiteDetails(&ts, &details);
 
-	SMPAssertTrue(tc, ts.count == 2);
-	SMPAssertTrue(tc, ts.failCount == 2);
+	SMPAssertTrue(tc, ts.m_ncount == 2);
+	SMPAssertTrue(tc, ts.m_nfailCount == 2);
 
 	front =
 		"There were 2 failures:\n"
@@ -512,7 +512,7 @@ void TestFail(SMPTest* tc)
 	jmp_buf buf;
 	int pointReached = 0;
 	SMPTest* tc2 = SMPTestNew("TestFails", TestFails);
-	tc2->jumpBuf = &buf;
+	tc2->m_pjumpBuf = &buf;
 	if (setjmp(buf) == 0)
 	{
 		SMPFail(tc2, "hello world");
@@ -529,19 +529,19 @@ void TestAssertStrEquals(SMPTest* tc)
 	const char* expected = "expected <hello> but was <world>";
 	const char *expectedMsg = "some text: expected <hello> but was <world>";
 
-	tc2->jumpBuf = &buf;
+	tc2->m_pjumpBuf = &buf;
 	if (setjmp(buf) == 0)
 	{
 		SMPAssertStrEquals(tc2, "hello", "world");
 	}
-	SMPAssertTrue(tc, tc2->failed);
-	SMPCompareAsserts(tc, "SMPAssertStrEquals failed", expected, tc2->message);
+	SMPAssertTrue(tc, tc2->m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssertStrEquals failed", expected, tc2->m_szmessage);
 	if (setjmp(buf) == 0)
 	{
 		SMPAssertStrEquals_Msg(tc2, "some text", "hello", "world");
 	}
-	SMPAssertTrue(tc, tc2->failed);
-	SMPCompareAsserts(tc, "SMPAssertStrEquals failed", expectedMsg, tc2->message);
+	SMPAssertTrue(tc, tc2->m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssertStrEquals failed", expectedMsg, tc2->m_szmessage);
 }
 
 void TestAssertStrEquals_NULL(SMPTest* tc)
@@ -549,19 +549,19 @@ void TestAssertStrEquals_NULL(SMPTest* tc)
 	jmp_buf buf;
 	SMPTest *tc2 = SMPTestNew("TestAssertStrEquals_NULL", TestFails);
 
-	tc2->jumpBuf = &buf;
+	tc2->m_pjumpBuf = &buf;
 	if (setjmp(buf) == 0)
 	{
 		SMPAssertStrEquals(tc2, NULL, NULL);
 	}
-	SMPAssertTrue(tc, !tc2->failed);
-	SMPCompareAsserts(tc, "SMPAssertStrEquals_NULL failed", NULL, tc2->message);
+	SMPAssertTrue(tc, !tc2->m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssertStrEquals_NULL failed", NULL, tc2->m_szmessage);
 	if (setjmp(buf) == 0)
 	{
 		SMPAssertStrEquals_Msg(tc2, "some text", NULL, NULL);
 	}
-	SMPAssertTrue(tc, !tc2->failed);
-	SMPCompareAsserts(tc, "SMPAssertStrEquals_NULL failed", NULL, tc2->message);
+	SMPAssertTrue(tc, !tc2->m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssertStrEquals_NULL failed", NULL, tc2->m_szmessage);
 }
 
 void TestAssertStrEquals_FailNULLStr(SMPTest* tc)
@@ -572,19 +572,19 @@ void TestAssertStrEquals_FailNULLStr(SMPTest* tc)
 	const char* expected = "expected <hello> but was <NULL>";
 	const char *expectedMsg = "some text: expected <hello> but was <NULL>";
 
-	tc2->jumpBuf = &buf;
+	tc2->m_pjumpBuf = &buf;
 	if (setjmp(buf) == 0)
 	{
 		SMPAssertStrEquals(tc2, "hello", NULL);
 	}
-	SMPAssertTrue(tc, tc2->failed);
-	SMPCompareAsserts(tc, "SMPAssertStrEquals_FailNULLStr failed", expected, tc2->message);
+	SMPAssertTrue(tc, tc2->m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssertStrEquals_FailNULLStr failed", expected, tc2->m_szmessage);
 	if (setjmp(buf) == 0)
 	{
 		SMPAssertStrEquals_Msg(tc2, "some text", "hello", NULL);
 	}
-	SMPAssertTrue(tc, tc2->failed);
-	SMPCompareAsserts(tc, "SMPAssertStrEquals_FailNULLStr failed", expectedMsg, tc2->message);
+	SMPAssertTrue(tc, tc2->m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssertStrEquals_FailNULLStr failed", expectedMsg, tc2->m_szmessage);
 }
 
 void TestAssertStrEquals_FailStrNULL(SMPTest* tc)
@@ -595,19 +595,19 @@ void TestAssertStrEquals_FailStrNULL(SMPTest* tc)
 	const char* expected = "expected <NULL> but was <hello>";
 	const char *expectedMsg = "some text: expected <NULL> but was <hello>";
 
-	tc2->jumpBuf = &buf;
+	tc2->m_pjumpBuf = &buf;
 	if (setjmp(buf) == 0)
 	{
 		SMPAssertStrEquals(tc2, NULL, "hello");
 	}
-	SMPAssertTrue(tc, tc2->failed);
-	SMPCompareAsserts(tc, "SMPAssertStrEquals_FailStrNULL failed", expected, tc2->message);
+	SMPAssertTrue(tc, tc2->m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssertStrEquals_FailStrNULL failed", expected, tc2->m_szmessage);
 	if (setjmp(buf) == 0)
 	{
 		SMPAssertStrEquals_Msg(tc2, "some text", NULL, "hello");
 	}
-	SMPAssertTrue(tc, tc2->failed);
-	SMPCompareAsserts(tc, "SMPAssertStrEquals_FailStrNULL failed", expectedMsg, tc2->message);
+	SMPAssertTrue(tc, tc2->m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssertStrEquals_FailStrNULL failed", expectedMsg, tc2->m_szmessage);
 }
 
 void TestAssertIntEquals(SMPTest* tc)
@@ -616,19 +616,19 @@ void TestAssertIntEquals(SMPTest* tc)
 	SMPTest *tc2 = SMPTestNew("TestAssertIntEquals", TestFails);
 	const char* expected = "expected <42> but was <32>";
 	const char* expectedMsg = "some text: expected <42> but was <32>";
-	tc2->jumpBuf = &buf;
+	tc2->m_pjumpBuf = &buf;
 	if (setjmp(buf) == 0)
 	{
 		SMPAssertIntEquals(tc2, 42, 32);
 	}
-	SMPAssertTrue(tc, tc2->failed);
-	SMPCompareAsserts(tc, "SMPAssertIntEquals failed", expected, tc2->message);
+	SMPAssertTrue(tc, tc2->m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssertIntEquals failed", expected, tc2->m_szmessage);
 	if (setjmp(buf) == 0)
 	{
 		SMPAssertIntEquals_Msg(tc2, "some text", 42, 32);
 	}
-	SMPAssertTrue(tc, tc2->failed);
-	SMPCompareAsserts(tc, "SMPAssertStrEquals failed", expectedMsg, tc2->message);
+	SMPAssertTrue(tc, tc2->m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssertStrEquals failed", expectedMsg, tc2->m_szmessage);
 }
 
 void TestAssertDblEquals(SMPTest* tc)
@@ -645,27 +645,27 @@ void TestAssertDblEquals(SMPTest* tc)
 	SMPTestInit(tc2, "TestAssertDblEquals", TestPasses);
 
 	SMPAssertDblEquals(tc2, x, x, 0.0);
-	SMPAssertTrue(tc, ! tc2->failed);
-	SMPAssertTrue(tc, NULL == tc2->message);
+	SMPAssertTrue(tc, ! tc2->m_bfailed);
+	SMPAssertTrue(tc, NULL == tc2->m_szmessage);
 
 	SMPAssertDblEquals(tc2, x, y, 0.01);
-	SMPAssertTrue(tc, ! tc2->failed);
-	SMPAssertTrue(tc, NULL == tc2->message);
+	SMPAssertTrue(tc, ! tc2->m_bfailed);
+	SMPAssertTrue(tc, NULL == tc2->m_szmessage);
 
-	tc2->jumpBuf = &buf;
+	tc2->m_pjumpBuf = &buf;
 	if (setjmp(buf) == 0)
 	{
 		SMPAssertDblEquals(tc2, x, y, 0.001);
 	}
-	SMPAssertTrue(tc, tc2->failed);
-	SMPCompareAsserts(tc, "SMPAssertDblEquals failed", expected, tc2->message);
-	tc2->jumpBuf = &buf;
+	SMPAssertTrue(tc, tc2->m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssertDblEquals failed", expected, tc2->m_szmessage);
+	tc2->m_pjumpBuf = &buf;
 	if (setjmp(buf) == 0)
 	{
 		SMPAssertDblEquals_Msg(tc2, "some text", x, y, 0.001);
 	}
-	SMPAssertTrue(tc, tc2->failed);
-	SMPCompareAsserts(tc, "SMPAssertDblEquals failed", expectedMsg, tc2->message);
+	SMPAssertTrue(tc, tc2->m_bfailed);
+	SMPCompareAsserts(tc, "SMPAssertDblEquals failed", expectedMsg, tc2->m_szmessage);
 }
 
 /*-------------------------------------------------------------------------*

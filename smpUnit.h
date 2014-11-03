@@ -15,12 +15,12 @@ typedef void (*TestFunction)(SMPTest *);
 
 struct SMPTest
 {
-	char* name;
-	TestFunction function;
-	int failed;
-	int ran;
-	const char* message;
-	jmp_buf *jumpBuf;
+	char* m_szname;
+	TestFunction m_pfunction;
+	int m_bfailed;
+	int m_bran;
+	const char* m_szmessage;
+	jmp_buf *m_pjumpBuf;
 };
 
 void SMPTestInit(SMPTest* t, const char* name, TestFunction function);
@@ -73,10 +73,9 @@ void SMPAssertPtrEquals_LineMsg(SMPTest* tc,
 
 typedef struct
 {
-	int count;
-	SMPTest* list[MAX_TEST_CASES];
-	int failCount;
-
+	int m_ncount;
+	SMPTest* m_alist[MAX_TEST_CASES];
+	int m_nfailCount;
 } SMPSuite;
 
 

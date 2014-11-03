@@ -15,12 +15,12 @@
 
 void SMPTestInit(SMPTest* t, const char* name, TestFunction function)
 {
-	t->name =SMPStrCopy(name);
-	t->failed = 0;
-	t->ran = 0;
-	t->message = NULL;
-	t->function = function;
-	t->jumpBuf = NULL;
+	t->m_szname =SMPStrCopy(name);
+	t->m_bfailed = 0;
+	t->m_bran = 0;
+	t->m_szmessage = NULL;
+	t->m_pfunction = function;
+	t->m_pjumpBuf = NULL;
 }
 
 SMPTest* SMPTestNew(const char* name, TestFunction function)
@@ -33,20 +33,20 @@ SMPTest* SMPTestNew(const char* name, TestFunction function)
 void SMPTestDelete(SMPTest *t)
 {
         if (!t) return;
-        free(t->name);
+        free(t->m_szname);
         free(t);
 }
 
 void SMPTestRun(SMPTest* tc)
 {
 	jmp_buf buf;
-	tc->jumpBuf = &buf;
+	tc->m_pjumpBuf = &buf;
 	if (setjmp(buf) == 0)
 	{
-		tc->ran = 1;
-		(tc->function)(tc);
+		tc->m_bran = 1;
+		(tc->m_pfunction)(tc);
 	}
-	tc->jumpBuf = 0;
+	tc->m_pjumpBuf = 0;
 }
 
 static void SMPFailInternal(SMPTest* tc, const char* file, int line, SMPString* string)
@@ -56,9 +56,9 @@ static void SMPFailInternal(SMPTest* tc, const char* file, int line, SMPString* 
 	sprintf(buf, "%s:%d: ", file, line);
 	SMPStringInsert(string, buf, 0);
 
-	tc->failed = 1;
-	tc->message = string->buffer;
-	if (tc->jumpBuf != 0) longjmp(*(tc->jumpBuf), 0);
+	tc->m_bfailed = 1;
+	tc->m_szmessage = string->buffer;
+	if (tc->m_pjumpBuf != 0) longjmp(*(tc->m_pjumpBuf), 0);
 }
 
 void SMPFail_Line(SMPTest* tc, const char* file, int line, const char* message2, const char* message)
@@ -141,9 +141,9 @@ void SMPAssertPtrEquals_LineMsg(SMPTest* tc, const char* file, int line, const c
 
 void SMPSuiteInit(SMPSuite* testSuite)
 {
-	testSuite->count = 0;
-	testSuite->failCount = 0;
-        memset(testSuite->list, 0, sizeof(testSuite->list));
+	testSuite->m_ncount = 0;
+	testSuite->m_nfailCount = 0;
+        memset(testSuite->m_alist, 0, sizeof(testSuite->m_alist));
 }
 
 SMPSuite* SMPSuiteNew(void)
@@ -158,9 +158,9 @@ void SMPSuiteDelete(SMPSuite *testSuite)
         unsigned int n;
         for (n=0; n < MAX_TEST_CASES; n++)
         {
-                if (testSuite->list[n])
+                if (testSuite->m_alist[n])
                 {
-                        SMPTestDelete(testSuite->list[n]);
+                        SMPTestDelete(testSuite->m_alist[n]);
                 }
         }
         free(testSuite);
@@ -169,17 +169,17 @@ void SMPSuiteDelete(SMPSuite *testSuite)
 
 void SMPSuiteAdd(SMPSuite* testSuite, SMPTest *testCase)
 {
-	assert(testSuite->count < MAX_TEST_CASES);
-	testSuite->list[testSuite->count] = testCase;
-	testSuite->count++;
+	assert(testSuite->m_ncount < MAX_TEST_CASES);
+	testSuite->m_alist[testSuite->m_ncount] = testCase;
+	testSuite->m_ncount++;
 }
 
 void SMPSuiteAddSuite(SMPSuite* testSuite, SMPSuite* testSuite2)
 {
 	int i;
-	for (i = 0 ; i < testSuite2->count ; ++i)
+	for (i = 0 ; i < testSuite2->m_ncount ; ++i)
 	{
-		SMPTest* testCase = testSuite2->list[i];
+		SMPTest* testCase = testSuite2->m_alist[i];
 		SMPSuiteAdd(testSuite, testCase);
 	}
 }
@@ -187,21 +187,21 @@ void SMPSuiteAddSuite(SMPSuite* testSuite, SMPSuite* testSuite2)
 void SMPSuiteRun(SMPSuite* testSuite)
 {
 	int i;
-	for (i = 0 ; i < testSuite->count ; ++i)
+	for (i = 0 ; i < testSuite->m_ncount ; ++i)
 	{
-		SMPTest* testCase = testSuite->list[i];
+		SMPTest* testCase = testSuite->m_alist[i];
 		SMPTestRun(testCase);
-		if (testCase->failed) { testSuite->failCount += 1; }
+		if (testCase->m_bfailed) { testSuite->m_nfailCount += 1; }
 	}
 }
 
 void SMPSuiteSummary(SMPSuite* testSuite, SMPString* summary)
 {
 	int i;
-	for (i = 0 ; i < testSuite->count ; ++i)
+	for (i = 0 ; i < testSuite->m_ncount ; ++i)
 	{
-		SMPTest* testCase = testSuite->list[i];
-		SMPStringAppend(summary, testCase->failed ? "F" : ".");
+		SMPTest* testCase = testSuite->m_alist[i];
+		SMPStringAppend(summary, testCase->m_bfailed ? "F" : ".");
 	}
 	SMPStringAppend(summary, "\n\n");
 }
@@ -211,33 +211,33 @@ void SMPSuiteDetails(SMPSuite* testSuite, SMPString* details)
 	int i;
 	int failCount = 0;
 
-	if (testSuite->failCount == 0)
+	if (testSuite->m_nfailCount == 0)
 	{
-		int passCount = testSuite->count - testSuite->failCount;
+		int passCount = testSuite->m_ncount - testSuite->m_nfailCount;
 		const char* testWord = passCount == 1 ? "test" : "tests";
 		SMPStringAppendFormat(details, "OK (%d %s)\n", passCount, testWord);
 	}
 	else
 	{
-		if (testSuite->failCount == 1)
+		if (testSuite->m_nfailCount == 1)
 			SMPStringAppend(details, "There was 1 failure:\n");
 		else
-			SMPStringAppendFormat(details, "There were %d failures:\n", testSuite->failCount);
+			SMPStringAppendFormat(details, "There were %d failures:\n", testSuite->m_nfailCount);
 
-		for (i = 0 ; i < testSuite->count ; ++i)
+		for (i = 0 ; i < testSuite->m_ncount ; ++i)
 		{
-			SMPTest* testCase = testSuite->list[i];
-			if (testCase->failed)
+			SMPTest* testCase = testSuite->m_alist[i];
+			if (testCase->m_bfailed)
 			{
 				failCount++;
 				SMPStringAppendFormat(details, "%d) %s: %s\n",
-					failCount, testCase->name, testCase->message);
+					failCount, testCase->m_szname, testCase->m_szmessage);
 			}
 		}
 		SMPStringAppend(details, "\n!!!FAILURES!!!\n");
 
-		SMPStringAppendFormat(details, "Runs: %d ",   testSuite->count);
-		SMPStringAppendFormat(details, "Passes: %d ", testSuite->count - testSuite->failCount);
-		SMPStringAppendFormat(details, "Fails: %d\n",  testSuite->failCount);
+		SMPStringAppendFormat(details, "Runs: %d ",   testSuite->m_ncount);
+		SMPStringAppendFormat(details, "Passes: %d ", testSuite->m_ncount - testSuite->m_nfailCount);
+		SMPStringAppendFormat(details, "Fails: %d\n",  testSuite->m_nfailCount);
 	}
 }
